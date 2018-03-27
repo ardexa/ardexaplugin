@@ -6,6 +6,7 @@ ardexaplugin
 :license: MIT, see LICENSE for more details.
 """
 
+from __future__ import print_function, unicode_literals
 import os
 import time
 from subprocess import Popen, PIPE
