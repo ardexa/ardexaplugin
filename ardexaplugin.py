@@ -144,10 +144,15 @@ def convert_to_float(value):
         return 0.0, False
 
 
-def convert_int32(high_byte, low_byte):
-    """This function converts 2 binary 16 bit numbers to a 32 bit unsigned integer"""
+def convert_int32(high_word, low_word):
+    """Convert two words to a 32 bit unsigned integer"""
+    return convert_words_to_uint(high_word, low_word)
+
+
+def convert_words_to_uint(high_word, low_word):
+    """Convert two words to a floating point"""
     try:
-        number = (int(high_byte) << 16) + int(low_byte)
+        number = (int(high_word) << 16) | int(low_word)
         return number, True
     except:
         return 0, False
