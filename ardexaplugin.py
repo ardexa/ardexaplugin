@@ -95,11 +95,11 @@ def check_pidfile(pidfile, debug):
             pidfile_handle.close()
             if check_pid(pid, debug):
                 return True
-            else:
-                # PID is not active, remove the PID file
-                os.unlink(pidfile)
         except:
-            os.unlink(pidfile)
+            pass
+
+        # PID is not active, remove the PID file
+        os.unlink(pidfile)
 
     # Create a PID file, to ensure this is script is only run once (at a time)
     pid = str(os.getpid())
@@ -133,6 +133,7 @@ def convert_to_int(value):
         return ret_val, True
     except ValueError:
         return 0, False
+
 
 def convert_to_float(value):
     """Convert a string to FLOAT"""
