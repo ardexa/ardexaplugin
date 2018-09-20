@@ -9,6 +9,7 @@ ardexaplugin
 from __future__ import print_function, unicode_literals
 import os
 import time
+import struct
 from subprocess import Popen, PIPE
 
 def write_log(log_directory, log_filename, header, logline, debug,
@@ -156,6 +157,19 @@ def convert_words_to_uint(high_word, low_word):
         return number, True
     except:
         return 0, False
+
+
+def convert_words_to_float(high_word, low_word):
+    """Convert two words to a floating point"""
+    number, retval = convert_words_to_uint(high_word, low_word)
+    if not retval:
+        return 0.0, False
+
+    try:
+        packed_float = struct.pack('>l', number)
+        return struct.unpack('>f', packed_float)[0], True
+    except:
+        return 0.0, False
 
 
 def disown(debug):
