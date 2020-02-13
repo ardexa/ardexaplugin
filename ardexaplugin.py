@@ -2,11 +2,10 @@
 ardexaplugin
 ============
 
-:copyright: (c) 2018 Ardexa Pty Limited
+:copyright: (c) 2020 Ardexa Pty Limited
 :license: MIT, see LICENSE for more details.
 """
 
-from __future__ import print_function, unicode_literals
 import os
 import time
 import struct
@@ -42,12 +41,12 @@ def write_log(log_directory, log_filename, header, logline, debug,
         os.makedirs(log_directory)
     full_path_log = os.path.join(log_directory, log_filename)
     if debug > 1:
-        print("Full path of log directory: ", full_path_log)
+        print("Full path of log directory: {}".format(full_path_log))
     # If the file doesn't exist, annotate that a new 'latest' file is to be created
     # and that a header is to be created
     if not os.path.isfile(full_path_log):
         if debug > 1:
-            print("Log file doesn't exist: ", full_path_log)
+            print("Log file doesn't exist: {}".format(full_path_log))
         create_new_file = True
 
     # Repeat for the 'latest', if it doesn't exist
@@ -56,7 +55,7 @@ def write_log(log_directory, log_filename, header, logline, debug,
             os.makedirs(latest_directory)
         full_path_latest = os.path.join(latest_directory, latest_filename)
         if debug > 1:
-            print("Full path of latest directory: ", full_path_latest)
+            print("Full path of latest directory: {}".format(full_path_latest))
         # If the 'create_new_file' tag is set AND the file exists, then remove it
         if create_new_file and os.path.isfile(full_path_latest):
             # then remove the file
@@ -65,7 +64,7 @@ def write_log(log_directory, log_filename, header, logline, debug,
     # Now create both (or open both) and write to them
     if debug > 1:
         print("##########################################")
-        print("Writing the line to", full_path_latest)
+        print("Writing the line to: {}".format(full_path_latest))
         print(logline)
         print("##########################################")
 
@@ -184,7 +183,7 @@ def disown(debug):
     try:
         infile = open(cgroup_file, "r")
     except IOError:
-        print("Could not open cgroup file: ", cgroup_file)
+        print("Could not open cgroup file: {}".format(cgroup_file))
         return False
 
     # Read each line
@@ -208,10 +207,10 @@ def disown(debug):
         if not os.path.exists(full_dir):
             os.makedirs(full_dir)
             if debug >= 1:
-                print("Making directory: ", full_dir)
+                print("Making directory: {}".format(full_dir))
         else:
             if debug >= 1:
-                print("Directory already exists: ", full_dir)
+                print("Directory already exists: {}".format(full_dir))
 
         # Add the PID to the file
         full_path = full_dir + "/cgroup.procs"
@@ -264,15 +263,14 @@ def run_program(prog_list, debug, shell):
             stdout, stderr = process.communicate()
             retcode = process.returncode
             if debug >= 1:
-                print("Program : ", " ".join(prog_list))
-                print("Return Code: ", retcode)
-                print("Stdout: ", stdout)
-                print("Stderr: ", stderr)
+                print("Program : {}".format(" ".join(prog_list)))
+                print("Return Code: {}".format(retcode))
+                print("Stdout: {}".format(stdout))
+                print("Stderr: {}".format(stderr))
             return bool(retcode)
-        else:
-            command = " ".join(prog_list)
-            os.system(command)
-            return True
+        command = " ".join(prog_list)
+        os.system(command)
+        return True
     except:
         return False
 
