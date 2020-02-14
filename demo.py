@@ -30,8 +30,10 @@ DATA = [
     [1, 3.5, True, "ok"],
 ]
 
-def get_data(_ip_address, call):
+def get_data(ip_address, call):
     """Do the thing, get the data"""
+    if ip_address == '0.0.0.0':
+        time.sleep(100)
     readings = DATA[call]
     return list(zip(HEADER, readings))
 
@@ -51,6 +53,21 @@ def cli(verbose):
 @click.argument('output_directory')
 @click.option('-c', '--changes-only', is_flag=True)
 def log(ip_address, output_directory, changes_only):
+    """Fetch and log data"""
+    # table and source
+    table = "table"
+    source = [ip_address, 502]
+
+    data = get_data(ip_address, 0)
+    ap.write_dyn_log(output_directory, table, source, data, changes_only)
+
+
+@cli.command()
+@click.argument('ip_address')
+@click.argument('config_file', type=click.File('r'))
+@click.argument('output_directory')
+@click.option('-c', '--changes-only', is_flag=True)
+def config(ip_address, config_file, output_directory, changes_only):
     """Fetch and log data"""
     # table and source
     table = "table"
@@ -90,6 +107,15 @@ def change(ip_address, output_directory, changes_only):
     data = get_data(ip_address, 0)
     data.append(('junk(discard)', 'ignore'))
     ap.write_dyn_log(output_directory, table, source, data, changes_only)
+
+
+@cli.command()
+@click.argument('command_file', type=click.File('r'))
+@click.pass_context
+def service(ctx, command_file):
+    ap.activate_service_mode()
+    commands = ap.parse_service_file(command_file, ['config_file'])
+    ap.run_click_command_as_a_service(ctx, config, commands)
 
 
 if __name__ == "__main__":

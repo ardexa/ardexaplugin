@@ -7,10 +7,12 @@ ardexaplugin
 """
 
 import csv
+import signal
 import struct
 import sys
 import time
 import os
+from threading import Event, Thread
 from io import StringIO
 from subprocess import Popen, PIPE
 
@@ -25,6 +27,73 @@ def set_debug(debug):
     # pylint: disable=W0603
     global DEBUG
     DEBUG = debug
+
+
+def activate_service_mode():
+    global SERVICE_MODE
+    SERVICE_MODE = True
+
+
+def parse_service_file(command_file, file_args=None):
+    commands = []
+    line_number = 1
+    for row in csv.DictReader(command_file, skipinitialspace=True):
+        line_number += 1
+        try:
+            flags = row.pop('flags', None)
+            frequency = int(row.pop('frequency', None))
+            for flag in flags.split(':'):
+                if flag:
+                    row[flag] = True
+            for file_arg in file_args:
+                with open(row[file_arg]) as fd:
+                    row[file_arg] = fd.readlines()
+            commands.append({'frequency': frequency, 'kwargs': row})
+        except Exception as err:
+            print("Invalid config on line {}: {}".format(line_number, err), file=sys.stderr)
+            continue
+    return commands
+
+
+def call_repeatedly(interval, ctx, func, **kwargs):
+    """Repeatedly call a given function after a given interval (will drift)"""
+    stopped = Event()
+    global IS_RUNNING
+    def loop():
+        while not stopped.wait(interval) and IS_RUNNING: # the first call is in `interval` secs
+            try:
+                if DEBUG >= 2:
+                    print("TICK: {}".format(kwargs['output_directory']))
+                ctx.invoke(func, **kwargs)
+            except Exception as err:
+                print("ERROR: {}".format(err), file=sys.stderr)
+                if DEBUG >= 2:
+                    print("    ***    invoke() failure")
+    Thread(target=loop).start()
+    return stopped.set
+
+
+def run_click_command_as_a_service(ctx, func, commands, delay=0):
+    global IS_RUNNING
+    if not commands:
+        raise ValueError("Missing commands")
+
+    cleanup = []
+    for command in commands:
+        cancel_future_calls = call_repeatedly(command['frequency'], ctx, func, **command['kwargs'])
+        cleanup.append(cancel_future_calls)
+        if delay > 0:
+            time.sleep(delay)
+
+    # wait forever
+    try:
+        signal.pause()
+    except KeyboardInterrupt:
+        if DEBUG:
+            print("Cleaning up...")
+    IS_RUNNING = False
+    for cancel in cleanup:
+        cancel()
 
 
 def get_ardexa_field_type(field_type):
