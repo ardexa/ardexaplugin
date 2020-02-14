@@ -8,6 +8,7 @@ ardexaplugin
 
 import csv
 import struct
+import sys
 import time
 import os
 from io import StringIO
@@ -111,10 +112,10 @@ def write_dyn_log(output_directory, table, source, output, changes_only=False):
     data_line = get_datetime_str() + "," + \
             make_csv_str([clean_and_stringify_value(f[1]) for f in output])
     log_directory = get_log_directory(output_directory, table, source)
-    write_log(log_directory, header_line, data_line)
+    write_log(log_directory, header_line, data_line, changes_only)
 
 
-def write_log(log_directory, header_line, data_line):
+def write_log(log_directory, header_line, data_line, changes_only=False):
     """Write the data to the files.
 
     The ARCHIVE file is the historical log. Files are named according to the
@@ -135,15 +136,28 @@ def write_log(log_directory, header_line, data_line):
         print("DATA   : {}".format(data_line), end='')
 
     # If the archive file doesn't exist, means we've moved to a new day.
-    # Rotate latest
-    if not os.path.isfile(archive_file):
-        write_header = True
-        if DEBUG > 1:
-            print(" * ARCHIVE doesn't exist, rotating LATEST")
-        try:
+    # Rotate latest. Doesn't matter if the header format has changed
+    try:
+        if not os.path.isfile(archive_file):
+            write_header = True
+            if DEBUG > 1:
+                print(" * ARCHIVE doesn't exist, rotating LATEST")
             os.remove(latest_file)
-        except FileNotFoundError:
-            pass
+        else:
+            # Files exist, so make sure that the header line matches
+            if header_has_changed(header_line, latest_file):
+                # Move the old file and remove latest.csv this will force the
+                # agent to reprocess the header
+                os.rename(archive_file, archive_file + ".1")
+                if DEBUG:
+                    print(" * Configuration change detected, replacing " + LATEST_FILENAME)
+                os.remove(latest_file)
+                write_header = True
+    except FileNotFoundError:
+        pass
+
+    if changes_only and not data_has_changed(data_line, latest_file):
+        return
 
     # Write the data_line to the log file
     with open(archive_file, "a") as output_archive:
@@ -370,3 +384,89 @@ def parse_address_list(addrs):
                 yield i
         else: # more than one hyphen
             raise ValueError('format error in %s' % addr)
+
+
+def header_has_changed(header_line, latest_file):
+    """Check if the file header has changed. If it has, rotate the files"""
+    # pylint: disable=W0603
+    global SERVICE_MODE, SERVICE_CACHE
+    current_header_line = None
+    if SERVICE_MODE:
+        if latest_file not in SERVICE_CACHE:
+            SERVICE_CACHE[latest_file] = {}
+        if 'header' in SERVICE_CACHE[latest_file]:
+            current_header_line = SERVICE_CACHE[latest_file]['header']
+        # update the cache
+        SERVICE_CACHE[latest_file]['header'] = header_line
+
+    if current_header_line is None:
+        with open(latest_file) as latest:
+            current_header_line = latest.readline()
+
+    if header_line != current_header_line:
+        if DEBUG >= 2:
+            print(" * Header has changed")
+            print("OLD HEADER: " + current_header_line.strip())
+            print("NEW HEADER: " + header_line.strip())
+        return True
+
+    return False
+
+
+def data_has_changed(data_line, latest_file):
+    """Check if the data has changed."""
+    # pylint: disable=W0603
+    global SERVICE_MODE, SERVICE_CACHE
+    last_data_line = None
+    if SERVICE_MODE:
+        if latest_file not in SERVICE_CACHE:
+            SERVICE_CACHE[latest_file] = {}
+        if 'last_line' in SERVICE_CACHE[latest_file]:
+            last_data_line = SERVICE_CACHE[latest_file]['last_line']
+        # update the cache
+        SERVICE_CACHE[latest_file]['last_line'] = data_line
+
+    if last_data_line is None:
+        try:
+            with open(latest_file) as latest:
+                lines = tail(latest)
+                if lines:
+                    last_data_line = lines[0]
+        except FileNotFoundError:
+            return True
+
+    # Skip over the Datetime field, as it will change constantly
+    first_comma = data_line.find(',')
+    if data_line[first_comma:] != last_data_line[first_comma:]:
+        return True
+
+    if DEBUG or not SERVICE_MODE:
+        print("No change since last reading", file=sys.stderr)
+    return False
+
+
+def tail(file_handle, lines=1, _buffer=4098):
+    """Tail a file and get X lines from the end"""
+    # place holder for the lines found
+    lines_found = []
+
+    # block counter will be multiplied by buffer
+    # to get the block size from the end
+    block_counter = -1
+
+    # loop until we find X lines
+    while len(lines_found) < lines:
+        try:
+            file_handle.seek(block_counter * _buffer, os.SEEK_END)
+        except IOError:  # either file is too small, or too many lines requested
+            file_handle.seek(0)
+            lines_found = file_handle.readlines()
+            break
+
+        lines_found = file_handle.readlines()
+
+        # decrement the block counter to get the
+        # next X bytes
+        block_counter -= 1
+
+    return lines_found[-lines:]
