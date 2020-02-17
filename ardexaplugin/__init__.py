@@ -268,7 +268,7 @@ def write_log(log_directory, header_line, data_line, changes_only=False):
         output_latest.write(data_line)
 
 
-def check_pidfile(pidfile, debug):
+def check_pidfile(pidfile):
     """Check that a process is not running more than once, using PIDFILE"""
     # Check PID exists and see if the PID is running
     if os.path.isfile(pidfile):
@@ -277,7 +277,7 @@ def check_pidfile(pidfile, debug):
         try:
             pid = int(pidfile_handle.read())
             pidfile_handle.close()
-            if check_pid(pid, debug):
+            if check_pid(pid):
                 return True
         except:
             pass
@@ -291,16 +291,16 @@ def check_pidfile(pidfile, debug):
     return False
 
 
-def check_pid(pid, debug):
+def check_pid(pid):
     """This function will check whether a PID is currently running"""
     try:
         # A Kill of 0 is to check if the PID is active. It won't kill the process
         os.kill(pid, 0)
-        if debug > 1:
+        if DEBUG > 1:
             print("Script has a PIDFILE where the process is still running")
         return True
     except OSError:
-        if debug > 1:
+        if DEBUG > 1:
             print("Script does not appear to be running")
         return False
 
@@ -359,102 +359,25 @@ def convert_words_to_float(high_word, low_word):
         return 0.0, False
 
 
-def disown(debug):
-    """This function will disown, so the Ardexa service can be restarted"""
-    # Get the current PID
-    pid = os.getpid()
-    cgroup_file = "/proc/" + str(pid) + "/cgroup"
+def run_program(prog_list, shell=False):
+    """Run a program and check program return code. Note that some commands
+    don't work well with Popen.  So if this function is specifically called
+    with 'shell=True', then it will run the old 'os.system'. In which case,
+    there is no program output """
     try:
-        infile = open(cgroup_file, "r")
-    except IOError:
-        print("Could not open cgroup file: {}".format(cgroup_file))
-        return False
-
-    # Read each line
-    for line in infile:
-        # Check if the line contains "ardexa.service"
-        if line.find("ardexa.service") == -1:
-            continue
-
-        # if the lines contains "name=", replace it with nothing
-        line = line.replace("name=", "")
-        # Split  the line by commas
-        items_list = line.split(':')
-        accounts = items_list[1]
-        dir_str = accounts + "/ardexa.disown"
-        # If accounts is empty, continue
-        if not accounts:
-            continue
-
-        # Create the dir and all subdirs
-        full_dir = "/sys/fs/cgroup/" + dir_str
-        if not os.path.exists(full_dir):
-            os.makedirs(full_dir)
-            if debug >= 1:
-                print("Making directory: {}".format(full_dir))
-        else:
-            if debug >= 1:
-                print("Directory already exists: {}".format(full_dir))
-
-        # Add the PID to the file
-        full_path = full_dir + "/cgroup.procs"
-        prog_list = ["echo", str(pid), ">", full_path]
-        run_program(prog_list, debug, True)
-
-        # If this item contains a comma, then separate it, and reverse
-        # some OSes will need cpuacct,cpu reversed to actually work
-        if accounts.find(",") != -1:
-            acct_list = accounts.split(',')
-            accounts = acct_list[1] + "," + acct_list[0]
-            dir_str = accounts + "/ardexa.disown"
-            # Create the dir and all subdirs. But it may not work. So use a TRY
-            full_dir = "/sys/fs/cgroup/" + dir_str
-            try:
-                if not os.path.exists(full_dir):
-                    os.makedirs(full_dir)
-            except:
-                continue
-
-            # Add the PID to the file
-            full_path = full_dir + "/cgroup.procs"
-            prog_list = ["echo", str(pid), ">", full_path]
-            run_program(prog_list, debug, True)
-
-    infile.close()
-
-    # For debug purposes only
-    if debug >= 1:
-        prog_list = ["cat", cgroup_file]
-        run_program(prog_list, debug, False)
-
-    # If there are any "ardexa.service" in the proc file. If so, exit with error
-    prog_list = ["grep", "-q", "ardexa.service", cgroup_file]
-    if run_program(prog_list, debug, False):
-        # There are entries still left in the file
-        return False
-
-    return True
-
-
-def run_program(prog_list, debug, shell):
-    """Run a  program and check program return code Note that some commands don't work
-    well with Popen.  So if this function is specifically called with 'shell=True',
-    then it will run the old 'os.system'. In which case, there is no program output
-    """
-    try:
-        if not shell:
-            process = Popen(prog_list, stdout=PIPE, stderr=PIPE)
-            stdout, stderr = process.communicate()
-            retcode = process.returncode
-            if debug >= 1:
-                print("Program : {}".format(" ".join(prog_list)))
-                print("Return Code: {}".format(retcode))
-                print("Stdout: {}".format(stdout))
-                print("Stderr: {}".format(stderr))
-            return bool(retcode)
-        command = " ".join(prog_list)
-        os.system(command)
-        return True
+        if shell:
+            command = " ".join(prog_list)
+            os.system(command)
+            return True
+        process = Popen(prog_list, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = process.communicate()
+        retcode = process.returncode
+        if DEBUG >= 1:
+            print("Program : {}".format(" ".join(prog_list)))
+            print("Return Code: {}".format(retcode))
+            print("Stdout: {}".format(stdout))
+            print("Stderr: {}".format(stderr))
+        return bool(retcode)
     except:
         return False
 
