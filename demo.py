@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """Mock plugin
   Usage: python demo.py -vv log 1.2.3.4 /tmp/ardexa/logs
 """
@@ -54,6 +55,26 @@ def cli(verbose):
 @click.argument('ip_address')
 @click.argument('output_directory')
 @click.option('-c', '--changes-only', is_flag=True)
+def pid(ip_address, output_directory, changes_only):
+    """Fetch and log data"""
+    # table and source
+    table = "table"
+    source = [ip_address, 502]
+
+    try:
+        ap.check_pidfile("modbus", source)
+    except ap.PluginAlreadyRunning:
+        print("Already running")
+        return
+
+    data = get_data(ip_address, 0)
+    ap.write_dyn_log(output_directory, table, source, data, changes_only)
+
+
+@cli.command()
+@click.argument('ip_address')
+@click.argument('output_directory')
+@click.option('-c', '--changes-only', is_flag=True)
 def log(ip_address, output_directory, changes_only):
     """Fetch and log data"""
     # table and source
@@ -75,8 +96,15 @@ def config(ip_address, config_file, output_directory, changes_only):
     table = "table"
     source = [ip_address, 502]
 
+    try:
+        ap.check_pidfile("modbus", source)
+    except ap.PluginAlreadyRunning:
+        print("Already running")
+        return
+
     data = get_data(ip_address, 0)
     ap.write_dyn_log(output_directory, table, source, data, changes_only)
+    #ap.remove_pidfile("modbus", source)
 
 
 @cli.command()

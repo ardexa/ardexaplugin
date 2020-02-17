@@ -6,10 +6,12 @@ ardexaplugin
 :license: MIT, see LICENSE for more details.
 """
 
+import re
+import os
 import struct
 import time
-import os
 from subprocess import Popen, PIPE
+import psutil
 from .dynamic import (
     write_dyn_log,
     set_debug as dyn_set_debug,
@@ -21,6 +23,10 @@ from .service import (
 )
 
 DEBUG = 0
+PID_PATH = "/var/run"
+
+class PluginAlreadyRunning(Exception):
+    pass
 
 def set_debug(debug):
     """Set the debug level across the whole module"""
@@ -31,38 +37,55 @@ def set_debug(debug):
     svc_set_debug(debug)
 
 
-def check_pidfile(pidfile):
-    """Check that a process is not running more than once, using PIDFILE"""
-    # Check PID exists and see if the PID is running
-    if os.path.isfile(pidfile):
-        pidfile_handle = open(pidfile, 'r')
-        # try and read the PID file. If no luck, remove it
-        try:
-            pid = int(pidfile_handle.read())
-            pidfile_handle.close()
-            if check_pid(pid):
-                return True
-        except:
-            pass
+def get_pidfile(name, variant):
+    """Generate PIDFILE name and return full path"""
+    pidname = "{}-{}.pid".format(name, "-".join([re.sub(r'[^.a-zA-Z0-9]', '', str(s)) for s in variant]))
+    return os.path.join(PID_PATH, pidname)
 
+
+def check_pidfile(name, variant):
+    """Check that a process is not running more than once, using PIDFILE"""
+    current_pid = os.getpid()
+    pidfile = get_pidfile(name, variant)
+    # Check PID exists and see if the PID is running
+    try:
+        with open(pidfile, 'r') as ph:
+            old_pid = int(ph.read())
+            # if PID is us, assume we're in service mode
+            if current_pid == old_pid:
+                return
+            if check_pid(old_pid):
+                raise PluginAlreadyRunning
         # PID is not active, remove the PID file
         os.unlink(pidfile)
+    except FileNotFoundError:
+        pass
 
     # Create a PID file, to ensure this is script is only run once (at a time)
-    pid = str(os.getpid())
-    open(pidfile, 'w').write(pid)
-    return False
+    with open(pidfile, 'w') as ph:
+        ph.write(str(current_pid))
+
+
+def remove_pidfile(name, variant):
+    """Check that a process is not running more than once, using PIDFILE"""
+    pidfile = get_pidfile(name, variant)
+    os.unlink(pidfile)
 
 
 def check_pid(pid):
     """This function will check whether a PID is currently running"""
     try:
-        # A Kill of 0 is to check if the PID is active. It won't kill the process
-        os.kill(pid, 0)
+        # will fail if pid doesn't exist
+        proc = psutil.Process(pid)
+
+        # check that process is the same name as us
+        myproc = psutil.Process(os.getpid())
+        if myproc.name() != proc.name():
+            return False
         if DEBUG > 1:
             print("Script has a PIDFILE where the process is still running")
         return True
-    except OSError:
+    except psutil.NoSuchProcess:
         if DEBUG > 1:
             print("Script does not appear to be running")
         return False
