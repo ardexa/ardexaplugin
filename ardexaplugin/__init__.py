@@ -29,11 +29,6 @@ def set_debug(debug):
     DEBUG = debug
 
 
-def activate_service_mode():
-    global SERVICE_MODE
-    SERVICE_MODE = True
-
-
 def parse_service_file(command_file, file_args=None):
     commands = []
     line_number = 1
@@ -74,6 +69,12 @@ def call_repeatedly(interval, ctx, func, **kwargs):
 
 
 def run_click_command_as_a_service(ctx, func, commands, delay=0):
+    """Open a sub-process for each command and call it repeatedly based on the
+    frequency"""
+    # pylint: disable=W0603
+    global SERVICE_MODE
+    SERVICE_MODE = True
+
     global IS_RUNNING
     if not commands:
         raise ValueError("Missing commands")

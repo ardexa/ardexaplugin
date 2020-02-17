@@ -113,7 +113,6 @@ def change(ip_address, output_directory, changes_only):
 @click.argument('command_file', type=click.File('r'))
 @click.pass_context
 def service(ctx, command_file):
-    ap.activate_service_mode()
     commands = ap.parse_service_file(command_file, ['config_file'])
     ap.run_click_command_as_a_service(ctx, config, commands)
 
