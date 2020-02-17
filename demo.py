@@ -33,7 +33,9 @@ DATA = [
 def get_data(ip_address, call):
     """Do the thing, get the data"""
     if ip_address == '0.0.0.0':
-        time.sleep(100)
+        time.sleep(10)
+    if ip_address == '1.2.3.5':
+        time.sleep(1)
     readings = DATA[call]
     return list(zip(HEADER, readings))
 

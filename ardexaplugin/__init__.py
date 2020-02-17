@@ -12,15 +12,15 @@ import struct
 import sys
 import time
 import os
-from threading import Event, Thread
+from multiprocessing import Event, Process
 from io import StringIO
 from subprocess import Popen, PIPE
 
 DEBUG = 0
 LATEST_FILENAME = "latest.csv"
-IS_RUNNING = True
 SERVICE_MODE = False
 SERVICE_CACHE = {}
+
 
 def set_debug(debug):
     """Set the debug level across the whole module"""
@@ -30,6 +30,7 @@ def set_debug(debug):
 
 
 def parse_service_file(command_file, file_args=None):
+    """Open and parse CSV service file"""
     commands = []
     line_number = 1
     for row in csv.DictReader(command_file, skipinitialspace=True):
@@ -50,22 +51,44 @@ def parse_service_file(command_file, file_args=None):
     return commands
 
 
+def alarm_handler(_signum, _frame):
+    """Raise timeout on SIGALRM"""
+    raise TimeoutError('Timeout')
+
+
 def call_repeatedly(interval, ctx, func, **kwargs):
     """Repeatedly call a given function after a given interval (will drift)"""
     stopped = Event()
-    global IS_RUNNING
+    # the first call is in `interval` secs
     def loop():
-        while not stopped.wait(interval) and IS_RUNNING: # the first call is in `interval` secs
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        wait_time = interval
+        time_taken = 0
+        while not stopped.wait(wait_time):
             try:
-                if DEBUG >= 2:
-                    print("TICK: {}".format(kwargs['output_directory']))
+                if DEBUG >= 1:
+                    print("TICK: {}".format(",".join([str(x) for x in kwargs.values()])))
+                start_time = time.time()
+                signal.signal(signal.SIGALRM, alarm_handler)
+                signal.alarm(interval)
                 ctx.invoke(func, **kwargs)
+                signal.alarm(0)
+                time_taken = time.time() - start_time
+                #print("TOOK: {}".format(time_taken))
             except Exception as err:
                 print("ERROR: {}".format(err), file=sys.stderr)
-                if DEBUG >= 2:
-                    print("    ***    invoke() failure")
-    Thread(target=loop).start()
-    return stopped.set
+            finally:
+                wait_time = interval - time_taken
+    proc = Process(target=loop)
+    proc.start()
+    def stop():
+        stopped.set()
+        proc.join(2)
+        if proc.is_alive():
+            proc.terminate()
+            proc.join()
+    return stop
 
 
 def run_click_command_as_a_service(ctx, func, commands, delay=0):
@@ -75,14 +98,19 @@ def run_click_command_as_a_service(ctx, func, commands, delay=0):
     global SERVICE_MODE
     SERVICE_MODE = True
 
-    global IS_RUNNING
     if not commands:
         raise ValueError("Missing commands")
 
     cleanup = []
+    def term_handler(_signum, _frame):
+        for stop in cleanup:
+            stop()
+    signal.signal(signal.SIGTERM, term_handler)
+    signal.signal(signal.SIGINT, term_handler)
+
     for command in commands:
-        cancel_future_calls = call_repeatedly(command['frequency'], ctx, func, **command['kwargs'])
-        cleanup.append(cancel_future_calls)
+        stop = call_repeatedly(command['frequency'], ctx, func, **command['kwargs'])
+        cleanup.append(stop)
         if delay > 0:
             time.sleep(delay)
 
@@ -92,9 +120,7 @@ def run_click_command_as_a_service(ctx, func, commands, delay=0):
     except KeyboardInterrupt:
         if DEBUG:
             print("Cleaning up...")
-    IS_RUNNING = False
-    for cancel in cleanup:
-        cancel()
+    term_handler(None, None)
 
 
 def get_ardexa_field_type(field_type):
