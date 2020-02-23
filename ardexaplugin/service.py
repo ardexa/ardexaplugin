@@ -29,8 +29,8 @@ def parse_service_file(command_file, file_args=None):
                 if flag:
                     row[flag] = True
             for file_arg in file_args:
-                with open(row[file_arg]) as fd:
-                    row[file_arg] = fd.readlines()
+                with open(row[file_arg]) as file_handle:
+                    row[file_arg] = file_handle.readlines()
             commands.append({'frequency': frequency, 'kwargs': row})
         except Exception as err:
             print("Invalid config on line {}: {}".format(line_number, err), file=sys.stderr)

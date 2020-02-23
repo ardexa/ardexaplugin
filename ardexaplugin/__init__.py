@@ -26,7 +26,7 @@ DEBUG = 0
 PID_PATH = "/var/run"
 
 class PluginAlreadyRunning(Exception):
-    pass
+    """Raised when plugin is already running"""
 
 def set_debug(debug):
     """Set the debug level across the whole module"""
@@ -39,7 +39,8 @@ def set_debug(debug):
 
 def get_pidfile(name, variant):
     """Generate PIDFILE name and return full path"""
-    pidname = "{}-{}.pid".format(name, "-".join([re.sub(r'[^.a-zA-Z0-9]', '', str(s)) for s in variant]))
+    pidname = "{}-{}.pid".format(name, "-".join([re.sub(r'[^.a-zA-Z0-9]', '', str(s))
+                                                 for s in variant]))
     return os.path.join(PID_PATH, pidname)
 
 
@@ -49,8 +50,8 @@ def check_pidfile(name, variant):
     pidfile = get_pidfile(name, variant)
     # Check PID exists and see if the PID is running
     try:
-        with open(pidfile, 'r') as ph:
-            old_pid = int(ph.read())
+        with open(pidfile, 'r') as pid_handle:
+            old_pid = int(pid_handle.read())
             # if PID is us, assume we're in service mode
             if current_pid == old_pid:
                 return
@@ -62,8 +63,8 @@ def check_pidfile(name, variant):
         pass
 
     # Create a PID file, to ensure this is script is only run once (at a time)
-    with open(pidfile, 'w') as ph:
-        ph.write(str(current_pid))
+    with open(pidfile, 'w') as pid_handle:
+        pid_handle.write(str(current_pid))
 
 
 def remove_pidfile(name, variant):
