@@ -86,12 +86,21 @@ def make_csv_str(data):
     return data_line
 
 
+def get_source_name(source):
+    """Convert the source to a directory"""
+    if isinstance(source, str):
+        return source
+    if not isinstance(source, list):
+        raise ValueError("Unknown source format")
+    return os.path.join(*[str(s) for s in source])
+
+
 def get_log_directory(output_directory, table, source):
     """Generate final log directory.
 
     Based on the table(string) and source(list). Create the target directory
     if it doesn't exist"""
-    log_directory = os.path.join(output_directory, table, *[str(s) for s in source])
+    log_directory = os.path.join(output_directory, table, get_source_name(source))
     try:
         os.makedirs(log_directory)
     except FileExistsError:

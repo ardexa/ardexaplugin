@@ -13,8 +13,9 @@ import time
 from subprocess import Popen, PIPE
 import psutil
 from .dynamic import (
-    write_dyn_log,
+    get_source_name,
     set_debug as dyn_set_debug,
+    write_dyn_log,
 )
 from .service import (
     parse_service_file,
