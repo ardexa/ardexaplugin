@@ -17,7 +17,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='ardexaplugin',
-    version='2.0.0',
+    version='2.0.1',
     description='A suite of common tools for developing Ardexa Plugins',
     long_description=long_description,
     url='https://github.com/ardexa/ardexaplugin',
@@ -29,14 +29,13 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
 
     keywords='development iot ardexa',
 
-    py_modules=["ardexaplugin"],
+    packages=["ardexaplugin"],
     install_requires=[
         'psutil',
     ],

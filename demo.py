@@ -7,7 +7,6 @@ import time
 import click
 import ardexaplugin as ap
 
-
 DEBUG = 0
 HEADER = [{
     "name": "counter",
