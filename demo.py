@@ -81,7 +81,9 @@ def log(ip_address, output_directory, changes_only):
     source = [ip_address, 502]
 
     data = get_data(ip_address, 0)
-    ap.write_dyn_log(output_directory, table, source, data, changes_only)
+    meta = (("Example", "ttyUSB"), ("Port", 502))
+    ap.print_verbose_log(table, source, meta, data)
+    #ap.write_dyn_log(output_directory, table, source, data, changes_only)
 
 
 @cli.command()

@@ -118,6 +118,18 @@ def get_output_files(log_directory):
     return latest_file, archive_file
 
 
+def print_verbose_log(table, source, meta, data):
+    """Pretty print the log output to screen. Append Datetime"""
+    output = (("Table", table), ("Source", get_source_name(source)), *meta, *data)
+    output = [(process_header_field(item[0]), clean_and_stringify_value(item[1]))
+              for item in output]
+    max_key_len = max(len(item[0]) for item in output)
+    max_val_len = max(len(item[1]) for item in output)
+    format_str = "  {{:<{}}}  {{:<{}}}".format(max_key_len, max_val_len)
+    for item in output:
+        print(format_str.format(*item))
+
+
 def write_dyn_log(output_directory, table, source, output, changes_only=False):
     """Turn output into header and data CSV. Append Datetime"""
     header_line = "# Datetime(date)," + make_csv_str([process_header_field(f[0]) for f in output])

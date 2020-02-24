@@ -17,7 +17,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='ardexaplugin',
-    version='2.0.1',
+    version='2.0.2',
     description='A suite of common tools for developing Ardexa Plugins',
     long_description=long_description,
     url='https://github.com/ardexa/ardexaplugin',
