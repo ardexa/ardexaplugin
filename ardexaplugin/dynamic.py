@@ -86,13 +86,23 @@ def make_csv_str(data):
     return data_line
 
 
+def clean_source_name(source):
+    """Clean up the source name"""
+    # Make sure it doesn't start with a slash
+    if source.startswith('/dev'):
+        source = source[4:]
+    while source.startswith('/'):
+        source = source[1:]
+    return source
+
+
 def get_source_name(source):
     """Convert the source to a directory"""
     if isinstance(source, str):
-        return source
+        return clean_source_name(source)
     if not isinstance(source, list):
         raise ValueError("Unknown source format")
-    return os.path.join(*[str(s) for s in source])
+    return os.path.join(*[clean_source_name(str(s)) for s in source])
 
 
 def get_log_directory(output_directory, table, source):

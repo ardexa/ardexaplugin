@@ -78,7 +78,7 @@ def log(ip_address, output_directory, changes_only):
     """Fetch and log data"""
     # table and source
     table = "table"
-    source = [ip_address, 502]
+    source = [ip_address, "/dev/ttyS0", "/sys/ttyUSB0", 502]
 
     data = get_data(ip_address, 0)
     meta = (("Example", "ttyUSB"), ("Port", 502))
