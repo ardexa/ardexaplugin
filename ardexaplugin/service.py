@@ -16,7 +16,7 @@ def set_debug(debug):
     DEBUG = debug
 
 
-def parse_service_file(command_file, file_args=None):
+def parse_service_file(command_file, file_args=[]):
     """Open and parse CSV service file"""
     commands = []
     line_number = 1
