@@ -90,8 +90,9 @@ def log(ip_address, output_directory, changes_only):
 @click.argument('ip_address')
 @click.argument('config_file', type=click.File('r'))
 @click.argument('output_directory')
+@click.option('--port', default=8080)
 @click.option('-c', '--changes-only', is_flag=True)
-def config(ip_address, config_file, output_directory, changes_only):
+def config(ip_address, config_file, output_directory, port, changes_only):
     """Fetch and log data"""
     # table and source
     table = "table"
@@ -104,7 +105,9 @@ def config(ip_address, config_file, output_directory, changes_only):
         return
 
     data = get_data(ip_address, 0)
-    ap.write_dyn_log(output_directory, table, source, data, changes_only)
+    meta = (("Example", "ttyUSB"), ("Port", port))
+    ap.print_verbose_log(table, source, meta, data)
+    #ap.write_dyn_log(output_directory, table, source, data, changes_only)
     #ap.remove_pidfile("modbus", source)
 
 
