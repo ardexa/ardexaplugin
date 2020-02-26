@@ -1,1 +1,4 @@
 include LICENSE.txt
+
+# Include the data files
+recursive-include ardexaplugin/data *

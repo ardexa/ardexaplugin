@@ -39,6 +39,10 @@ setup(
     install_requires=[
         'psutil',
     ],
+    package_data={
+        'data': ['data/plugin.service']
+    },
+    include_package_data=True,
 
     project_urls={
         'Bug Reports': 'https://github.com/ardexa/ardexaplugin/issues',

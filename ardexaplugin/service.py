@@ -1,13 +1,22 @@
 """Service mode"""
 
 import csv
+import re
+import os
+from shutil import copyfile
 import signal
+from string import Template
 import sys
 import time
 from multiprocessing import Event, Process
 from .dynamic import activate_service_mode
 
 DEBUG = 0
+
+SERVICE_UNIT_FILE_NAME = "plugin.service"
+SERVICE_UNIT_FILE_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data", SERVICE_UNIT_FILE_NAME)
+SERVICE_SYSTEMD_PATH = "/lib/systemd/system"
+SERVICE_DEFAULT_CONFIG_PATH = "/etc/ardexa/services"
 
 def set_debug(debug):
     """Set the debug level across the whole module"""
@@ -16,7 +25,7 @@ def set_debug(debug):
     DEBUG = debug
 
 
-def parse_service_file(command_file, file_args=[]):
+def parse_service_file(command_file, file_args=[]): # pylint: disable=W0102
     """Open and parse CSV service file"""
     commands = []
     line_number = 1
@@ -106,3 +115,37 @@ def run_click_command_as_a_service(ctx, func, commands, delay=0):
         if DEBUG:
             print("Cleaning up...")
     term_handler(None, None)
+
+
+def activate_service(name, exe_name, config_path):
+    """Load, enable and start the systemd service"""
+
+    # Check the name is valid
+    pattern = re.compile("^[a-z][-a-z0-9]*[a-z0-9]$")
+    if not pattern.search(name):
+        raise ValueError('Invalid service name')
+    service_name = "{}-{}".format(name, SERVICE_UNIT_FILE_NAME)
+
+    # check the exe_name is valid
+    if not os.path.exists(os.path.join("/usr/local/bin", exe_name)):
+        raise ValueError('Invalid exe name')
+
+    # Load the service template, substitute variables and write to systemd
+    with open(SERVICE_UNIT_FILE_PATH) as template_file:
+        template = Template(str(template_file.read()))
+        with open(os.path.join(SERVICE_SYSTEMD_PATH, service_name), "w") as service_file:
+            service_file.write(template.substitute(name=name, exe_name=exe_name))
+
+    # Copy the config file to the services directory
+    try:
+        os.makedirs(SERVICE_DEFAULT_CONFIG_PATH)
+    except FileExistsError:
+        pass
+    copyfile(config_path, os.path.join(SERVICE_DEFAULT_CONFIG_PATH, name))
+
+    # reload systemd
+    os.system("systemctl daemon-reload")
+    # activate the service on boot
+    os.system("systemctl enable " + service_name)
+    # activate the service right now
+    os.system("systemctl start " + service_name)

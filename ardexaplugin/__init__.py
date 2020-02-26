@@ -19,6 +19,7 @@ from .dynamic import (
     write_dyn_log,
 )
 from .service import (
+    activate_service,
     parse_service_file,
     run_click_command_as_a_service,
     set_debug as svc_set_debug,

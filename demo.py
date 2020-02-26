@@ -151,5 +151,11 @@ def service(ctx, command_file):
     ap.run_click_command_as_a_service(ctx, config, commands)
 
 
+@cli.command()
+@click.argument('command_file', type=click.Path(exists=True))
+def activate_service(command_file):
+    ap.activate_service('demo', 'demo_ardexa', command_file)
+
+
 if __name__ == "__main__":
     cli()
