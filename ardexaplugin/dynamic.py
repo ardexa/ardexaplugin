@@ -114,7 +114,7 @@ def load_source_map(source_map):
     # pylint: disable=W0603
     global SOURCE_MAP
     for line in source_map:
-        [pattern, name] = line.split(',')
+        [pattern, name] = line.strip().split(',')
         SOURCE_MAP.append({
             "pattern": re.compile(pattern),
             "name": name,
