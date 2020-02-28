@@ -14,6 +14,7 @@ from subprocess import Popen, PIPE
 import psutil
 from .dynamic import (
     get_source_name,
+    load_source_map,
     print_verbose_log,
     set_debug as dyn_set_debug,
     write_dyn_log,

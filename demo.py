@@ -73,16 +73,23 @@ def pid(ip_address, output_directory, changes_only):
 @cli.command()
 @click.argument('ip_address')
 @click.argument('output_directory')
+@click.option('-s', '--source-map', type=click.File('r'))
 @click.option('-c', '--changes-only', is_flag=True)
-def log(ip_address, output_directory, changes_only):
+def log(ip_address, output_directory, source_map, changes_only):
     """Fetch and log data"""
     # table and source
     table = "table"
-    source = [ip_address, "/dev/ttyS0", "/sys/ttyUSB0", 502]
+    source = [ip_address, 502]
+
+    ap.load_source_map(source_map)
 
     data = get_data(ip_address, 0)
     meta = (("Example", "ttyUSB"), ("Port", 502))
     ap.print_verbose_log(table, source, meta, data)
+
+    print('---')
+    source = ["inverter", "/dev/ttyS0", 1]
+    ap.print_verbose_log(table, source, (), data)
     #ap.write_dyn_log(output_directory, table, source, data, changes_only)
 
 

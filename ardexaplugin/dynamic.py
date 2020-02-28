@@ -2,6 +2,7 @@
 
 import csv
 import os
+import re
 import sys
 import time
 from io import StringIO
@@ -10,6 +11,7 @@ DEBUG = 0
 LATEST_FILENAME = "latest.csv"
 SERVICE_MODE = False
 SERVICE_CACHE = {}
+SOURCE_MAP = []
 
 def set_debug(debug):
     """Set the debug level across the whole module"""
@@ -96,13 +98,36 @@ def clean_source_name(source):
     return source
 
 
+def mapped_name(source):
+    """Load a list of regex patterns with replacement names"""
+    # pylint: disable=W0603
+    global SOURCE_MAP
+    for srcmap in SOURCE_MAP:
+        if srcmap["pattern"].match(source):
+            return srcmap["name"]
+    return source
+
+
+def load_source_map(source_map):
+    """Load a list of regex patterns with replacement names"""
+    # pylint: disable=W0603
+    global SOURCE_MAP
+    for line in source_map:
+        [pattern, name] = line.split(',')
+        SOURCE_MAP.append({
+            "pattern": re.compile(pattern),
+            "name": name,
+        })
+
+
 def get_source_name(source):
     """Convert the source to a directory"""
     if isinstance(source, str):
         return clean_source_name(source)
     if not isinstance(source, list):
         raise ValueError("Unknown source format")
-    return os.path.join(*[clean_source_name(str(s)) for s in source])
+    name = os.path.join(*[clean_source_name(str(s)) for s in source])
+    return mapped_name(name)
 
 
 def get_log_directory(output_directory, table, source):
