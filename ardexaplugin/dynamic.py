@@ -103,8 +103,9 @@ def mapped_name(source):
     # pylint: disable=W0603
     global SOURCE_MAP
     for srcmap in SOURCE_MAP:
-        if srcmap["pattern"].match(source):
-            return srcmap["name"]
+        ret = srcmap["pattern"].match(source)
+        if ret:
+            return ret.expand(srcmap["name"])
     return source
 
 

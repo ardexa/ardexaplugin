@@ -1,1 +1,1 @@
-inverter/ttyS[0-9]/1,inverter-01
+inverter/ttyS[0-9]/([0-9]+),inverter-\1
