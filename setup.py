@@ -9,10 +9,8 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
-here = path.abspath(path.dirname(__file__))
-
 # Get the long description from the README file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open('README.md') as f:
     long_description = f.read()
 
 setup(
@@ -20,6 +18,7 @@ setup(
     version='2.0.5',
     description='A suite of common tools for developing Ardexa Plugins',
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/ardexa/ardexaplugin',
     author='Ardexa Pty Limited',
     author_email='support@ardexa.com',
@@ -29,8 +28,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
     ],
 
     keywords='development iot ardexa',
