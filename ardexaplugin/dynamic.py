@@ -121,13 +121,18 @@ def load_source_map(source_map):
         })
 
 
-def get_source_name(source):
+def get_unmapped_source_name(source):
     """Convert the source to a directory"""
     if isinstance(source, str):
         return clean_source_name(source)
     if not isinstance(source, list):
         raise ValueError("Unknown source format")
-    name = os.path.join(*[clean_source_name(str(s)) for s in source])
+    return os.path.join(*[clean_source_name(str(s)) for s in source])
+
+
+def get_source_name(source):
+    """Convert the source to a directory and check against sourcemap"""
+    name = get_unmapped_source_name(source)
     return mapped_name(name)
 
 
@@ -156,7 +161,13 @@ def get_output_files(log_directory):
 
 def print_verbose_log(table, source, meta, data):
     """Pretty print the log output to screen. Append Datetime"""
-    output = (("Table", table), ("Source", get_source_name(source)), *meta, *data)
+    unmapped_src = get_unmapped_source_name(source)
+    mapped_src = get_source_name(source)
+    if unmapped_src == mapped_src:
+        source_name = mapped_src
+    else:
+        source_name = "{} ({})".format(mapped_src, unmapped_src)
+    output = (("Table", table), ("Source", source_name), *meta, *data)
     output = [(process_header_field(item[0]), clean_and_stringify_value(item[1]))
               for item in output]
     max_key_len = max(len(item[0]) for item in output)
