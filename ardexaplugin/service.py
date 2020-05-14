@@ -34,6 +34,10 @@ def parse_service_file(command_file, file_args=[]): # pylint: disable=W0102
         try:
             flags = row.pop('flags', None)
             frequency = int(row.pop('frequency', None))
+            # ignore any keys starting with _
+            for k in list(row.keys()):
+                if k.startswith('_'):
+                    del row[k]
             for flag in flags.split(':'):
                 if flag:
                     row[flag] = True
