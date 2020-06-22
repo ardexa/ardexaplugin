@@ -183,6 +183,8 @@ def parse_address_list(addrs):
     for addr in addrs.split(','):
         elem = addr.split('-')
         if len(elem) == 1: # a number
+            if elem[0] == '':
+                continue
             yield int(elem[0])
         elif len(elem) == 2: # a range inclusive
             start, end = list(map(int, elem))
