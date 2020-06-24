@@ -174,4 +174,4 @@ def activate_service(name, exe_name, config_path):
     # activate the service on boot
     os.system("systemctl enable " + service_name)
     # activate the service right now
-    os.system("systemctl start " + service_name)
+    os.system("systemctl restart " + service_name)
