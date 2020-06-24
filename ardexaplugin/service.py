@@ -94,7 +94,8 @@ def call_repeatedly(interval, ctx, func, file_args, **kwargs):
                 ctx.invoke(func, **kwargs)
                 signal.alarm(0)
                 time_taken = time.time() - start_time
-                #print("TOOK: {}".format(time_taken))
+                if DEBUG >= 1:
+                    print("TOOK: {}".format(time_taken))
             except Exception as err:
                 print("ERROR: {}".format(err), file=sys.stderr)
             finally:
