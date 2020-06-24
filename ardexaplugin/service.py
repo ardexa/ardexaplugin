@@ -1,6 +1,7 @@
 """Service mode"""
 
 import csv
+import io
 import re
 import os
 from shutil import copyfile
@@ -17,6 +18,17 @@ SERVICE_UNIT_FILE_NAME = "plugin.service"
 SERVICE_UNIT_FILE_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), "data", SERVICE_UNIT_FILE_NAME)
 SERVICE_SYSTEMD_PATH = "/lib/systemd/system"
 SERVICE_DEFAULT_CONFIG_PATH = "/etc/ardexa/services"
+
+class NamedTextIOWrapper(io.TextIOWrapper):
+    def __init__(self, buffer, name=None, **kwargs):
+        vars(self)['name'] = name
+        super().__init__(buffer, **kwargs)
+
+    def __getattribute__(self, name):
+        if name == 'name':
+            return vars(self)['name']
+        return super().__getattribute__(name)
+
 
 def set_debug(debug):
     """Set the debug level across the whole module"""
@@ -42,9 +54,10 @@ def parse_service_file(command_file, file_args=[]): # pylint: disable=W0102
                 if flag:
                     row[flag] = True
             for file_arg in file_args:
-                with open(row[file_arg]) as file_handle:
-                    row[file_arg] = file_handle.readlines()
-            commands.append({'frequency': frequency, 'kwargs': row})
+                with open(row[file_arg], 'rb') as file_handle:
+                    #row[file_arg] = file_handle.readlines()
+                    row[file_arg] = NamedTextIOWrapper(io.BytesIO(file_handle.read()), name=row[file_arg])
+            commands.append({'frequency': frequency, 'kwargs': row, 'file_args': file_args})
         except Exception as err:
             print("Invalid config on line {}: {}".format(line_number, err), file=sys.stderr)
             continue
@@ -56,7 +69,7 @@ def alarm_handler(_signum, _frame):
     raise TimeoutError('Timeout')
 
 
-def call_repeatedly(interval, ctx, func, **kwargs):
+def call_repeatedly(interval, ctx, func, file_args, **kwargs):
     """Repeatedly call a given function after a given interval (will drift)"""
     stopped = Event()
     # the first call is in `interval` secs
@@ -67,6 +80,12 @@ def call_repeatedly(interval, ctx, func, **kwargs):
         time_taken = 0
         while not stopped.wait(wait_time):
             try:
+                # try to reset the "files"
+                for file_arg in file_args:
+                    try:
+                        kwargs[file_arg].seek(0, 0)
+                    except Exception as err:
+                        pass
                 if DEBUG >= 1:
                     print("TICK: {}".format(",".join([str(x) for x in kwargs.values()])))
                 start_time = time.time()
@@ -107,7 +126,7 @@ def run_click_command_as_a_service(ctx, func, commands, delay=0):
     signal.signal(signal.SIGINT, term_handler)
 
     for command in commands:
-        stop = call_repeatedly(command['frequency'], ctx, func, **command['kwargs'])
+        stop = call_repeatedly(command['frequency'], ctx, func, command['file_args'], **command['kwargs'])
         cleanup.append(stop)
         if delay > 0:
             time.sleep(delay)
