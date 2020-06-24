@@ -44,8 +44,10 @@ def parse_service_file(command_file, file_args=[]): # pylint: disable=W0102
     for row in csv.DictReader(command_file, skipinitialspace=True):
         line_number += 1
         try:
-            flags = row.pop('flags', None)
-            frequency = int(row.pop('frequency', None))
+            flags = row.pop('flags', '')
+            if flags is None:
+                flags = ''
+            frequency = int(row.pop('frequency', 5))
             # ignore any keys starting with _
             for k in list(row.keys()):
                 if k.startswith('_'):
