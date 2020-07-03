@@ -177,6 +177,14 @@ def print_verbose_log(table, source, meta, data):
         print(format_str.format(*item))
 
 
+def write_dyn_log_no_date(output_directory, table, source, output, changes_only=False):
+    """Turn output into header and data CSV. Append Datetime"""
+    header_line = "# " + make_csv_str([process_header_field(f[0]) for f in output])
+    data_line = make_csv_str([clean_and_stringify_value(f[1]) for f in output])
+    log_directory = get_log_directory(output_directory, table, source)
+    write_log(log_directory, header_line, data_line, changes_only)
+
+
 def write_dyn_log(output_directory, table, source, output, changes_only=False):
     """Turn output into header and data CSV. Append Datetime"""
     header_line = "# Datetime(date)," + make_csv_str([process_header_field(f[0]) for f in output])

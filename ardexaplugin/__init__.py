@@ -19,6 +19,7 @@ from .dynamic import (
     print_verbose_log,
     set_debug as dyn_set_debug,
     write_dyn_log,
+    write_dyn_log_no_date,
 )
 from .service import (
     activate_service,
