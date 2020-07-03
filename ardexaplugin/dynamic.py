@@ -70,6 +70,8 @@ def process_header_field(field):
 
 def clean_and_stringify_value(value):
     """This function will escape backslashes since csv.writer does not"""
+    if value is None:
+        return ''
     value = str(value)
     if value.find("\n") != -1:
         value = value.replace("\n", " ")
