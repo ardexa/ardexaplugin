@@ -118,8 +118,8 @@ def load_source_map(source_map):
     for line in source_map:
         [pattern, name] = line.strip().split(',')
         SOURCE_MAP.append({
-            "pattern": re.compile(pattern),
-            "name": name,
+            "pattern": re.compile(pattern.strip()),
+            "name": name.strip(),
         })
 
 
