@@ -99,6 +99,8 @@ def call_repeatedly(interval, ctx, func, file_args, **kwargs):
                 if DEBUG >= 1:
                     print("TOOK: {}".format(time_taken))
             except Exception as err:
+                signal.alarm(0)
+                time_taken = time.time() - start_time
                 print("ERROR: {}".format(err), file=sys.stderr)
             finally:
                 wait_time = interval - time_taken
