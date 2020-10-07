@@ -80,30 +80,35 @@ def call_repeatedly(interval, ctx, func, file_args, **kwargs):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         wait_time = interval
         time_taken = 0
-        while not stopped.wait(wait_time):
-            try:
-                # try to reset the "files"
-                for file_arg in file_args:
-                    try:
-                        kwargs[file_arg].seek(0, 0)
-                    except Exception as err:
-                        pass
-                if DEBUG >= 1:
-                    print("TICK: {}".format(",".join([str(x) for x in kwargs.values()])))
-                start_time = time.time()
-                signal.signal(signal.SIGALRM, alarm_handler)
-                signal.alarm(interval)
-                ctx.invoke(func, **kwargs)
-                signal.alarm(0)
-                time_taken = time.time() - start_time
-                if DEBUG >= 1:
-                    print("TOOK: {}".format(time_taken))
-            except Exception as err:
-                signal.alarm(0)
-                time_taken = time.time() - start_time
-                print("ERROR: {}".format(err), file=sys.stderr)
-            finally:
-                wait_time = interval - time_taken
+        try:
+            while not stopped.wait(wait_time):
+                try:
+                    # try to reset the "files"
+                    for file_arg in file_args:
+                        try:
+                            kwargs[file_arg].seek(0, 0)
+                        except Exception as err:
+                            pass
+                    if DEBUG >= 1:
+                        print("TICK: {}".format(",".join([str(x) for x in kwargs.values()])))
+                    start_time = time.time()
+                    signal.signal(signal.SIGALRM, alarm_handler)
+                    signal.alarm(interval)
+                    ctx.invoke(func, **kwargs)
+                    signal.alarm(0)
+                    time_taken = time.time() - start_time
+                    if DEBUG >= 1:
+                        print("TOOK: {}".format(time_taken))
+                except Exception as err:
+                    signal.alarm(0)
+                    time_taken = time.time() - start_time
+                    print("ERROR: {}".format(err), file=sys.stderr)
+                finally:
+                    wait_time = interval - time_taken
+        except Exception as err:
+            print("LOOP ERROR: {}".format(err), file=sys.stderr)
+            print("Loop restarting...".format(err), file=sys.stderr)
+            loop()
     proc = Process(target=loop)
     proc.start()
     def stop():
