@@ -1,6 +1,7 @@
 """Dynamic mapping"""
 
 import csv
+import datetime
 import os
 import re
 import sys
@@ -68,10 +69,20 @@ def process_header_field(field):
     return "{}({})".format(field['name'], ardexa_type)
 
 
+def datetime_to_str(value):
+    """Convert datetimes (with or without second decimal points)"""
+    # If the offset is zero, treat as UTC
+    if value.utcoffset() is None or value.utcoffset() == datetime.timedelta(0):
+        return value.replace(microsecond=0, tzinfo=None).isoformat() + "Z"
+    return value.replace(microsecond=0).isoformat()
+
+
 def clean_and_stringify_value(value):
     """This function will escape backslashes since csv.writer does not"""
     if value is None:
         return ''
+    if isinstance(value, datetime.datetime):
+        return datetime_to_str(value)
     value = str(value)
     if value.find("\n") != -1:
         value = value.replace("\n", " ")

@@ -15,7 +15,7 @@ with open('README.md') as f:
 
 setup(
     name='ardexaplugin',
-    version='2.1.3',
+    version='2.2.0',
     description='A suite of common tools for developing Ardexa Plugins',
     long_description=long_description,
     long_description_content_type="text/markdown",
