@@ -1,0 +1,14 @@
+[Unit]
+Description=Ardexa $name plugin running as a service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/$exe_name service /etc/ardexa/services/$name
+Type=simple
+Restart=always
+# Leave a reasonable delay between restarts. This will also prevent systemd
+# declaring the service 'dead' (default: 5 restarts in 10s)
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

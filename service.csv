@@ -1,0 +1,4 @@
+_name, ip_address, config_file, output_directory, flags, frequency
+log-1,1.2.3.4,/tmp/ap_config,/tmp/ardexa/logs,,1
+log-2,1.2.3.5,/tmp/ap_config,/tmp/ardexa/logs,changes_only,2
+log-3,0.0.0.0,/tmp/ap_config,/tmp/ardexa/logs,,2
