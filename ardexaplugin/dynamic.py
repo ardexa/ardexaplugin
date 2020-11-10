@@ -47,9 +47,9 @@ def get_ardexa_field_type(field_type):
         return "date"
     if field_type == "discard":
         return "discard"
-    if field_type in ("string", "keyword"):
+    if field_type in ("string", "keyword", "str"):
         return "keyword"
-    return None
+    raise ValueError("Unknown field type: {}".format(field_type))
 
 
 def process_header_field(field):
@@ -61,8 +61,6 @@ def process_header_field(field):
         raise ValueError("Unknown header value")
 
     ardexa_type = get_ardexa_field_type(field['type'])
-    if ardexa_type is None:
-        raise ValueError("Unknown field type")
 
     if 'units' in field and field['units'] is not None:
         return "{}({}:{})".format(field['name'], ardexa_type, field['units'])
