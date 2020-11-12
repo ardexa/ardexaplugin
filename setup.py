@@ -15,7 +15,7 @@ with open('README.md') as f:
 
 setup(
     name='ardexaplugin',
-    version='2.2.1',
+    version='2.2.2',
     description='A suite of common tools for developing Ardexa Plugins',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -35,6 +35,7 @@ setup(
     packages=["ardexaplugin"],
     install_requires=[
         'psutil',
+        'wheel',
     ],
     package_data={
         'data': ['data/plugin.service']

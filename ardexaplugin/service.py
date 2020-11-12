@@ -9,6 +9,7 @@ import signal
 from string import Template
 import sys
 import time
+import traceback
 from multiprocessing import Event, Process
 from .dynamic import activate_service_mode
 
@@ -103,11 +104,12 @@ def call_repeatedly(interval, ctx, func, file_args, **kwargs):
                     signal.alarm(0)
                     time_taken = time.time() - start_time
                     print("ERROR: {}".format(err), file=sys.stderr)
+                    traceback.print_tb(err.__traceback__, file=sys.stderr)
                 finally:
                     wait_time = interval - time_taken
         except Exception as err:
             print("LOOP ERROR: {}".format(err), file=sys.stderr)
-            print("Loop restarting...".format(err), file=sys.stderr)
+            print("Loop restarting...", file=sys.stderr)
             loop()
     proc = Process(target=loop)
     proc.start()
