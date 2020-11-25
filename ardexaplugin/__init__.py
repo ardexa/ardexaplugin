@@ -10,7 +10,6 @@ import re
 import os
 import struct
 import time
-from subprocess import Popen, PIPE
 import psutil
 from .dynamic import (
     get_source_name,
@@ -145,29 +144,6 @@ def convert_words_to_float(high_word, low_word):
         return struct.unpack('>f', packed_float)[0], True
     except:
         return 0.0, False
-
-
-def run_program(prog_list, shell=False):
-    """Run a program and check program return code. Note that some commands
-    don't work well with Popen.  So if this function is specifically called
-    with 'shell=True', then it will run the old 'os.system'. In which case,
-    there is no program output """
-    try:
-        if shell:
-            command = " ".join(prog_list)
-            os.system(command)
-            return True
-        process = Popen(prog_list, stdout=PIPE, stderr=PIPE)
-        stdout, stderr = process.communicate()
-        retcode = process.returncode
-        if DEBUG >= 1:
-            print("Program : {}".format(" ".join(prog_list)))
-            print("Return Code: {}".format(retcode))
-            print("Stdout: {}".format(stdout))
-            print("Stderr: {}".format(stderr))
-        return bool(retcode)
-    except:
-        return False
 
 
 def parse_address_list(addrs):
