@@ -104,7 +104,8 @@ def call_repeatedly(interval, ctx, func, file_args, **kwargs):
                     signal.alarm(0)
                     time_taken = time.time() - start_time
                     print("ERROR: {}".format(err), file=sys.stderr)
-                    traceback.print_tb(err.__traceback__, file=sys.stderr)
+                    if not isinstance(err, TimeoutError):
+                        traceback.print_tb(err.__traceback__, file=sys.stderr)
                 finally:
                     wait_time = interval - time_taken
         except Exception as err:
