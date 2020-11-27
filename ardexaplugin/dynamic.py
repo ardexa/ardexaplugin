@@ -81,6 +81,8 @@ def clean_and_stringify_value(value):
         return ''
     if isinstance(value, datetime.datetime):
         return datetime_to_str(value)
+    if isinstance(value, float):
+        return "{:g}".format(round(value, 6))
     value = str(value)
     if value.find("\n") != -1:
         value = value.replace("\n", " ")
