@@ -29,14 +29,15 @@ def use_run():
 def loop():
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     for i in range(5):
         try:
             print("TICK: {}".format(i))
             start_time = time.time()
             signal.signal(signal.SIGALRM, alarm_handler)
             signal.alarm(2)
-            use_run()
-            #use_popen()
+            #use_run()
+            use_popen()
             signal.alarm(0)
             time_taken = time.time() - start_time
             print("TOOK: {}".format(time_taken))

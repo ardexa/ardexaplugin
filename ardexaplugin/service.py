@@ -79,6 +79,7 @@ def call_repeatedly(interval, ctx, func, file_args, **kwargs):
     def loop():
         signal.signal(signal.SIGTERM, signal.SIG_IGN)
         signal.signal(signal.SIGINT, signal.SIG_IGN)
+        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         wait_time = interval
         time_taken = 0
         try:
