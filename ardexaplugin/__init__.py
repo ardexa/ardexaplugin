@@ -26,6 +26,10 @@ from .service import (
     run_click_command_as_a_service,
     set_debug as svc_set_debug,
 )
+from .checkpoint import (
+    read_checkpoint,
+    write_checkpoint,
+)
 
 DEBUG = 0
 PID_PATH = "/var/run"
