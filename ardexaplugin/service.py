@@ -174,11 +174,10 @@ def activate_service(name, exe_name, config_path):
             service_file.write(template.substitute(name=name, exe_name=exe_name))
 
     # Copy the config file to the services directory
-    try:
-        os.makedirs(SERVICE_DEFAULT_CONFIG_PATH)
-    except FileExistsError:
-        pass
-    copyfile(config_path, os.path.join(SERVICE_DEFAULT_CONFIG_PATH, name))
+    os.makedirs(SERVICE_DEFAULT_CONFIG_PATH, exist_ok=True)
+    # don't copyfile if it's the same file
+    if config_path != os.path.join(SERVICE_DEFAULT_CONFIG_PATH, name):
+        copyfile(config_path, os.path.join(SERVICE_DEFAULT_CONFIG_PATH, name))
 
     # reload systemd
     os.system("systemctl daemon-reload")
