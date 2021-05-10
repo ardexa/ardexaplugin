@@ -4,7 +4,7 @@ import csv
 import io
 import re
 import os
-from shutil import copyfile
+from shutil import copyfile, SameFileError
 import signal
 from string import Template
 import sys
@@ -175,9 +175,10 @@ def activate_service(name, exe_name, config_path):
 
     # Copy the config file to the services directory
     os.makedirs(SERVICE_DEFAULT_CONFIG_PATH, exist_ok=True)
-    # don't copyfile if it's the same file
-    if config_path != os.path.join(SERVICE_DEFAULT_CONFIG_PATH, name):
+    try:
         copyfile(config_path, os.path.join(SERVICE_DEFAULT_CONFIG_PATH, name))
+    except SameFileError:
+        pass
 
     # reload systemd
     os.system("systemctl daemon-reload")
